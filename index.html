@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>iPad Web DJ Studio</title>
+  <style>
+    :root {
+      --bg: #121318;
+      --card: #1c1e24;
+      --accent-a: #00d2ff;
+      --accent-b: #ff0055;
+      --text: #f0f0f0;
+      --muted: #888e9e;
+      --border: #2e323d;
+      --mic-color: #f39c12;
+    }
+
+    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+    body { margin: 0; padding: 15px; background: var(--bg); color: var(--text); font-family: -apple-system, system-ui, sans-serif; height: 100vh; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+
+    header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+    h1 { margin: 0; font-size: 1.3rem; }
+
+    .top-bar { display: flex; gap: 10px; align-items: center; }
+    .btn { background: #2a2d37; color: var(--text); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+    .btn-mic.active { background: var(--mic-color); color: #000; }
+
+    .main-layout { display: grid; grid-template-columns: 1fr 240px 1fr; gap: 10px; flex-grow: 1; height: calc(100vh - 220px); }
+    .deck { background: var(--card); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--border); }
+    .deck-a { border-top: 4px solid var(--accent-a); }
+    .deck-b { border-top: 4px solid var(--accent-b); }
+
+    .mixer { background: var(--card); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; border: 1px solid var(--border); }
+    .eq-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+    .control { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%; font-size: 0.7rem; color: var(--muted); }
+
+    input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+    input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; background: #2a2d37; border-radius: 3px; }
+    input[type=range]::-webkit-slider-thumb { height: 18px; width: 18px; border-radius: 50%; background: #fff; -webkit-appearance: none; margin-top: -6px; }
+
+    /* Bottom Panel: Web Search & Storage Library */
+    .bottom-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; height: 140px; background: var(--card); border-radius: 8px; padding: 10px; border: 1px solid var(--border); }
+    .panel-section { display: flex; flex-direction: column; gap: 5px; overflow: hidden; }
+    .panel-title { font-size: 0.8rem; font-weight: bold; color: var(--muted); text-transform: uppercase; }
+    .list-box { background: rgba(0,0,0,0.2); border-radius: 4px; flex-grow: 1; overflow-y: auto; padding: 5px; font-size: 0.8rem; }
+    .track-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 6px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .search-bar { display: flex; gap: 5px; }
+    .search-bar input { background: #121318; border: 1px solid var(--border); color: #fff; padding: 4px 8px; border-radius: 4px; flex-grow: 1; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🎧 iPad Studio DJ</h1>
+    <div class="top-bar">
+      <!-- Microphone Controls -->
+      <button id="mic-btn" class="btn btn-mic">🎤 Enable Mic</button>
+      <div class="control" style="width: 80px;">
+        <label>Mic Vol</label>
+        <input type="range" id="mic-vol" min="0" max="1.5" step="0.01" value="0.8">
+      </div>
+      <button id="start-audio" class="btn" style="background:#27ae60;">Enable Audio</button>
+    </div>
+  </header>
+
+  <div class="main-layout">
+    <!-- DECK A -->
+    <div class="deck deck-a">
+      <div style="display:flex; justify-content:space-between;"><span style="color:var(--accent-a); font-weight:bold;">DECK A</span></div>
+      <div id="info-a" style="font-size:0.8rem; color:var(--muted); text-align:center;">No track loaded</div>
+      <button id="play-a" class="btn" style="background:#27ae60;">▶ Play</button>
+      <input type="file" id="file-a" accept="audio/*">
+    </div>
+
+    <!-- MIXER -->
+    <div class="mixer">
+      <div style="font-size:0.8rem; color:var(--muted); font-weight:bold;">EQ & MIX</div>
+      <div class="eq-row">
+        <div class="control"><label>Hi A</label><input type="range" id="high-a" min="-24" max="12" value="0"></div>
+        <div class="control"><label>Hi B</label><input type="range" id="high-b" min="-24" max="12" value="0"></div>
+      </div>
+      <div class="eq-row">
+        <div class="control"><label>Low A</label><input type="range" id="low-a" min="-24" max="12" value="0"></div>
+        <div class="control"><label>Low B</label><input type="range" id="low-b" min="-24" max="12" value="0"></div>
+      </div>
+      <div class="eq-row">
+        <div class="control"><label>Vol A</label><input type="range" id="vol-a" min="0" max="1" step="0.01" value="0.8"></div>
+        <div class="control"><label>Vol B</label><input type="range" id="vol-b" min="0" max="1" step="0.01" value="0.8"></div>
+      </div>
+      <div class="control">
+        <label>CROSSFADER</label>
+        <input type="range" id="crossfader" min="0" max="1" step="0.01" value="0.5">
+      </div>
+    </div>
+
+    <!-- DECK B -->
+    <div class="deck deck-b">
+      <div style="display:flex; justify-content:space-between;"><span style="color:var(--accent-b); font-weight:bold;">DECK B</span></div>
+      <div id="info-b" style="font-size:0.8rem; color:var(--muted); text-align:center;">No track loaded</div>
+      <button id="play-b" class="btn" style="background:#27ae60;">▶ Play</button>
+      <input type="file" id="file-b" accept="audio/*">
+    </div>
+  </div>
+
+  <!-- BOTTOM PANEL: SEARCH & LIBRARY -->
+  <div class="bottom-panel">
+    <!-- Web Audio Search (Internet Archive API) -->
+    <div class="panel-section">
+      <div class="panel-title">🌐 Web Music Search (Internet Archive)</div>
+      <div class="search-bar">
+        <input type="text" id="search-input" placeholder="Search track/artist...">
+        <button id="search-btn" class="btn">Search</button>
+      </div>
+      <div class="list-box" id="search-results">Results will appear here...</div>
+    </div>
+
+    <!-- Persistent IndexedDB Library -->
+    <div class="panel-section">
+      <div class="panel-title">💾 Saved Library (Persistent Storage)</div>
+      <div class="list-box" id="library-list">No saved tracks in browser database.</div>
+    </div>
+  </div>
+
+  <script>
+    let audioCtx, masterGain, micStream, micNode, micGain;
+    let db;
+
+    // 1. IndexedDB Setup (Persistent Storage)
+    const dbReq = indexedDB.open("DJStudioDB", 1);
+    dbReq.onupgradeneeded = (e) => {
+      db = e.target.result;
+      if (!db.objectStoreNames.contains("tracks")) {
+        db.createObjectStore("tracks", { keyPath: "id", autoIncrement: true });
+      }
+    };
+    dbReq.onsuccess = (e) => {
+      db = e.target.result;
+      renderLibrary();
+    };
+
+    function saveTrackToDB(name, blob) {
+      const tx = db.transaction("tracks", "readwrite");
+      const store = tx.objectStore("tracks");
+      store.add({ name: name, data: blob });
+      tx.oncomplete = () => renderLibrary();
+    }
+
+    function renderLibrary() {
+      if (!db) return;
+      const tx = db.transaction("tracks", "readonly");
+      const store = tx.objectStore("tracks");
+      const req = store.getAll();
+      req.onsuccess = () => {
+        const list = document.getElementById("library-list");
+        list.innerHTML = "";
+        req.result.forEach(track => {
+          const item = document.createElement("div");
+          item.className = "track-item";
+          item.innerHTML = `<span>${track.name}</span>
+            <div>
+              <button class="btn" onclick="loadFromDB(${track.id}, 'a')">Deck A</button>
+              <button class="btn" onclick="loadFromDB(${track.id}, 'b')">Deck B</button>
+            </div>`;
+          list.appendChild(item);
+        });
+      };
+    }
+
+    function loadFromDB(id, deckId) {
+      const tx = db.transaction("tracks", "readonly");
+      const store = tx.objectStore("tracks");
+      const req = store.get(id);
+      req.onsuccess = () => {
+        const file = req.result.data;
+        const url = URL.createObjectURL(file);
+        const deck = deckId === 'a' ? deckA : deckB;
+        deck.audio.src = url;
+        document.getElementById(`info-${deckId}`).innerText = req.result.name;
+      };
+    }
+
+    // 2. Web Audio Context Initialization
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = audioCtx.createGain();
+        masterGain.connect(audioCtx.destination);
+
+        // Mic Gain Node
+        micGain = audioCtx.createGain();
+        micGain.connect(masterGain);
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+    document.getElementById('start-audio').addEventListener('click', initAudio);
+
+    // 3. Live Microphone Integration
+    document.getElementById('mic-btn').addEventListener('click', async () => {
+      initAudio();
+      const micBtn = document.getElementById('mic-btn');
+      if (!micStream) {
+        try {
+          micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+          micNode = audioCtx.createMediaStreamSource(micStream);
+          micNode.connect(micGain);
+          micBtn.classList.add('active');
+          micBtn.innerText = "🎤 Mic Active";
+        } catch (err) {
+          alert("Microphone access denied or not supported.");
+        }
+      } else {
+        micStream.getTracks().forEach(track => track.stop());
+        micStream = null;
+        micBtn.classList.remove('active');
+        micBtn.innerText = "🎤 Enable Mic";
+      }
+    });
+
+    document.getElementById('mic-vol').addEventListener('input', (e) => {
+      if (micGain) micGain.gain.value = parseFloat(e.target.value);
+    });
+
+    // 4. Deck Class Construction
+    class Deck {
+      constructor(id) {
+        this.id = id;
+        this.audio = new Audio();
+        this.audio.crossOrigin = "anonymous";
+        this.isPlaying = false;
+        this.init();
+      }
+
+      init() {
+        this.playBtn = document.getElementById(`play-${this.id}`);
+        this.fileInput = document.getElementById(`file-${this.id}`);
+        this.volSlider = document.getElementById(`vol-${this.id}`);
+        this.highSlider = document.getElementById(`high-${this.id}`);
+        this.lowSlider = document.getElementById(`low-${this.id}`);
+
+        this.playBtn.addEventListener('click', () => this.togglePlay());
+        
+        this.fileInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const url = URL.createObjectURL(file);
+            this.audio.src = url;
+            document.getElementById(`info-${this.id}`).innerText = file.name;
+            saveTrackToDB(file.name, file); // Auto-save to persistent browser storage
+          }
+        });
+      }
+
+      setupNodes() {
+        if (!this.source) {
+          this.source = audioCtx.createMediaElementSource(this.audio);
+          this.highFilter = audioCtx.createBiquadFilter();
+          this.highFilter.type = "highshelf";
+          this.lowFilter = audioCtx.createBiquadFilter();
+          this.lowFilter.type = "lowshelf";
+          this.gainNode = audioCtx.createGain();
+          this.xfaderGain = audioCtx.createGain();
+
+          this.source.connect(this.highFilter);
+          this.highFilter.connect(this.lowFilter);
+          this.lowFilter.connect(this.gainNode);
+          this.gainNode.connect(this.xfaderGain);
+          this.xfaderGain.connect(masterGain);
+
+          this.volSlider.addEventListener('input', (e) => this.gainNode.gain.value = parseFloat(e.target.value));
+          this.highSlider.addEventListener('input', (e) => this.highFilter.gain.value = parseFloat(e.target.value));
+          this.lowSlider.addEventListener('input', (e) => this.lowFilter.gain.value = parseFloat(e.target.value));
+        }
+      }
+
+      togglePlay() {
+        initAudio();
+        this.setupNodes();
+        if (this.isPlaying) {
+          this.audio.pause();
+          this.isPlaying = false;
+          this.playBtn.innerText = "▶ Play";
+        } else {
+          this.audio.play();
+          this.isPlaying = true;
+          this.playBtn.innerText = "⏸ Pause";
+        }
+      }
+    }
+
+    const deckA = new Deck('a');
+    const deckB = new Deck('b');
+
+    // Crossfader
+    const xfader = document.getElementById('crossfader');
+    xfader.addEventListener('input', () => {
+      const x = parseFloat(xfader.value);
+      if (deckA.xfaderGain) deckA.xfaderGain.gain.value = Math.cos(x * 0.5 * Math.PI);
+      if (deckB.xfaderGain) deckB.xfaderGain.gain.value = Math.sin(x * 0.5 * Math.PI);
+    });
+
+    // 5. Open Web Search API (Internet Archive CORS-friendly search)
+    document.getElementById('search-btn').addEventListener('click', async () => {
+      const query = document.getElementById('search-input').value;
+      if (!query) return;
+      
+      const resultsContainer = document.getElementById('search-results');
+      resultsContainer.innerText = "Searching web audio archives...";
+
+      try {
+        const res = await fetch(`https://archive.org/advancedsearch.php?q=${encodeURIComponent(query)}+AND+mediatype:audio&output=json&rows=5`);
+        const data = await res.json();
+        const docs = data.response.docs;
+
+        resultsContainer.innerHTML = "";
+        if (docs.length === 0) {
+          resultsContainer.innerText = "No results found.";
+          return;
+        }
+
+        docs.forEach(doc => {
+          const item = document.createElement("div");
+          item.className = "track-item";
+          item.innerHTML = `<span>${doc.title || doc.identifier}</span>
+            <div>
+              <button class="btn" onclick="loadWebStream('${doc.identifier}', 'a')">Deck A</button>
+              <button class="btn" onclick="loadWebStream('${doc.identifier}', 'b')">Deck B</button>
+            </div>`;
+          resultsContainer.appendChild(item);
+        });
+      } catch (err) {
+        resultsContainer.innerText = "Error searching online tracks.";
+      }
+    });
+
+    async function loadWebStream(identifier, deckId) {
+      const metaRes = await fetch(`https://archive.org/metadata/${identifier}`);
+      const metaData = await metaRes.json();
+      const mp3File = metaData.files.find(f => f.name.endsWith('.mp3'));
+
+      if (mp3File) {
+        const streamUrl = `https://archive.org/download/${identifier}/${mp3File.name}`;
+        const deck = deckId === 'a' ? deckA : deckB;
+        deck.audio.src = streamUrl;
+        document.getElementById(`info-${deckId}`).innerText = mp3File.name;
+      } else {
+        alert("No playable MP3 format found for this track.");
+      }
+    }
+  </script>
+</body>
+</html>
